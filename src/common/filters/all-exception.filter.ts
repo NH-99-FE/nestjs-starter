@@ -25,7 +25,7 @@ export class AllExceptionFilter implements ExceptionFilter {
       query: request.query,
       body: request.body,
       params: request.params,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toLocaleString('zh-CN', { hour12: false }).toString(),
       // 还可以加入一些用户信息
       // IP信息
       ip: requestIp.getClientIp(request),

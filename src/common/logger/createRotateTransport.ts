@@ -6,7 +6,7 @@ import { utilities } from 'nest-winston'
 export const consoleTransports = new Console({
   level: 'info',
   format: format.combine(
-    format.timestamp(),
+    format.timestamp({ format: () => new Date().toLocaleString('zh-CN', { hour12: false }) }),
     format.ms(),
     utilities.format.nestLike('Winston')
   )
@@ -22,7 +22,7 @@ export function createDailyRotateTransport(level: string, fileName: string) {
     maxSize: '20m',
     maxFiles: '14d',
     format: format.combine(
-      format.timestamp(),
+      format.timestamp({ format: () => new Date().toLocaleString('zh-CN', { hour12: false }) }),
       format.simple()
     )
   })
