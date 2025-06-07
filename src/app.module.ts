@@ -3,6 +3,7 @@ import { AppController } from './app.controller';
 import { ConfigModule } from './common/config/config.module';
 import { LogsModule } from './common/logger/logs.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
+import { MailModule } from './common/mail/mail.module';
 
 @Module({
   imports: [
@@ -13,7 +14,8 @@ import { RedisModule } from '@nestjs-modules/ioredis';
       // options: {
       //   password:'example'
       // }
-    })
+    }),
+    MailModule
   ],
   controllers: [AppController],
   providers: []
