@@ -2,10 +2,19 @@ import { InjectRedis } from '@nestjs-modules/ioredis';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Controller, Get, Query } from '@nestjs/common';
 import Redis from 'ioredis';
+import { PrismaService } from './database/prisma/prisma.service';
 
 
 @Controller()
 export class AppController {
+  constructor(private prismaService: PrismaService){}
+
+  @Get()
+  async getHello():Promise<any> {
+    const res = await this.prismaService.user.findMany({})
+    return res
+  }
+
   // constructor(
   //   @InjectRedis() private readonly redis: Redis
   // ) {}
@@ -19,30 +28,30 @@ export class AppController {
   //   };
   // }
 
-  constructor(
-    private readonly mailerService: MailerService
-  ){}
+  // constructor(
+  //   private readonly mailerService: MailerService
+  // ){}
 
-  @Get('mail')
-  async sendEmail():Promise<any> {
-    this.mailerService
-      .sendMail({
-        to: '1537390855@qq.com',
-        from: '1537390855@qq.com',
-        subject: 'Testing Nest Mailermodule with template ✔',
-        template: 'welcome', // The `.pug`, `.ejs` or `.hbs` extension is appended automatically.
-        context: {
-          // Data to be sent to template engine.
-          name: 'john doe',
-        },
-      })
-      .then(() => {
-        console.log('sucess');
+  // @Get('mail')
+  // async sendEmail():Promise<any> {
+  //   this.mailerService
+  //     .sendMail({
+  //       to: '1537390855@qq.com',
+  //       from: '1537390855@qq.com',
+  //       subject: 'Testing Nest Mailermodule with template ✔',
+  //       template: 'welcome', // The `.pug`, `.ejs` or `.hbs` extension is appended automatically.
+  //       context: {
+  //         // Data to be sent to template engine.
+  //         name: 'God Liang',
+  //       },
+  //     })
+  //     .then(() => {
+  //       console.log('sucess');
         
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }
+  //     })
+  //     .catch((error) => {
+  //       console.log(error);
+  //     });
+  // }
 
 }
