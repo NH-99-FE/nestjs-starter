@@ -5,6 +5,7 @@ import { LogsModule } from './common/logger/logs.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { MailModule } from './common/mail/mail.module';
 import { DatabaseModule } from './database/database.module';
+import { UserModule } from './user/user.module';
 
 
 @Module({
@@ -18,7 +19,8 @@ import { DatabaseModule } from './database/database.module';
       // }
     }),
     MailModule,
-    DatabaseModule
+    DatabaseModule,
+    UserModule
   ],
   controllers: [AppController],
   providers: []

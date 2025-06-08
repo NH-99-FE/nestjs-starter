@@ -14,7 +14,6 @@ export class PrismaConfigService implements PrismaOptionsFactory {
   createPrismaModuleOptions(): PrismaModuleOptions | Promise<PrismaModuleOptions> {
     const headers = this.request.headers
     const tenantId = headers['x-tenant-id'] || 'default'
-    console.log(tenantId);
     
     if (tenantId === 'default1') {
       return {url:'mysql://root:example@localhost:3306/testdb'}
