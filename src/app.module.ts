@@ -17,7 +17,10 @@ import { PrismaModule } from './database/prisma/prisma.module';
       // }
     }),
     MailModule,
-    PrismaModule
+    PrismaModule.forRoot({
+      url:'mysql://root:example@localhost:3306/testdb',
+      name: 'prisma1'
+    })
   ],
   controllers: [AppController],
   providers: []

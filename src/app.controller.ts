@@ -1,13 +1,13 @@
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import { MailerService } from '@nestjs-modules/mailer';
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Inject, Query } from '@nestjs/common';
 import Redis from 'ioredis';
-import { PrismaService } from './database/prisma/prisma.service';
+import { PrismaClient } from '@prisma/client';
 
 
 @Controller()
 export class AppController {
-  constructor(private prismaService: PrismaService){}
+  constructor(@Inject('prisma1') private prismaService: PrismaClient){}
 
   @Get()
   async getHello():Promise<any> {

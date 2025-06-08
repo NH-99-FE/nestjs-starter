@@ -44,6 +44,9 @@ importers:
       nodemailer:
         specifier: ^7.0.3
         version: 7.0.3
+      prisma-mysql:
+        specifier: link:prisma\client\mysql
+        version: link:prisma/client/mysql
       request-ip:
         specifier: ^3.3.0
         version: 3.3.0
