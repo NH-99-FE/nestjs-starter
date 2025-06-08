@@ -1,64 +1,219 @@
-import { Global, Module, OnApplicationShutdown, Provider } from "@nestjs/common";
+import {
+  DynamicModule,
+  Global,
+  Module,
+  OnApplicationShutdown,
+  Provider,
+  Type,
+} from '@nestjs/common';
+import {
+  PrismaModuleAsyncOptions,
+  PrismaModuleOptions,
+  PrismaOptionsFactory,
+} from './prisma-options.interface';
+// import { PrismaClient } from '@prisma/client';
 import { PrismaClient as MySQLClient } from 'prisma/clients/mysql';
-import { PrismaModuleOptions } from "./prisma-options.interface";
-import { getDBType, handleRetry } from "./prisma.utils";
-import { PRISMA_CONNECTION_NAME } from "./prisma.constants";
-import { error } from "console";
-import { defer, lastValueFrom, catchError } from "rxjs";
+import { getDBType, handleRetry } from './prisma.utils';
+import {
+  PRISMA_CONNECTION_NAME,
+  PRISMA_CONNECTIONS,
+  PRISMA_MODULE_OPTIONS,
+} from './prisma.constants';
+import { catchError, defer, lastValueFrom } from 'rxjs';
 
+@Module({})
 @Global()
-@Module({
-})
 export class PrismaCoreModule implements OnApplicationShutdown {
-  onApplicationShutdown(signal?: string) {
-    throw new Error('Method not implemented.')
-  }
-
-  static forRoot(_options: PrismaModuleOptions){
-    const {url, options = {}, name, retryAttempts=10, retryDelay=3000, connectionFactory, connectionErrorFactory} = _options
-
-    let newOptions = {
-      datasourceUrl: url,
-    }
-    if (Object.keys(options).length){
-      newOptions = {...newOptions, ...options}
-    }
-
-    const dbType = getDBType(url as string)
-    let _prismaClient 
-    if(dbType === 'mysql') {
-      _prismaClient = MySQLClient
-    }else {
-      throw new Error(`Unsupported dataset type: ${dbType}`)
-    }
-
-    const prismaConnectionErrorFactory = connectionErrorFactory || (error => error)
-    const prismaConnectionFactory = connectionFactory || (async (clientOptiopns) => await new _prismaClient(clientOptiopns))
-
-    const prividerName = name || PRISMA_CONNECTION_NAME
-
-    const prismaClientProvider: Provider = {
-      provide: prividerName,
-      useFactory: async() => {
-        // 加入错误重试
-        const client = await prismaConnectionFactory(newOptions, name as string)
-        return lastValueFrom(
-          defer(async () => await client.$connect()).pipe(
-            handleRetry(retryAttempts, retryDelay),
-            catchError((error) => {
-              throw prismaConnectionErrorFactory(error)
-            })
-          )
-        ).then(() => client)
+  private static connections: Record<string, any> = {};
+  onApplicationShutdown() {
+    // throw new Error('Method not implemented.');
+    if (
+      PrismaCoreModule.connections &&
+      Object.keys(PrismaCoreModule.connections).length > 0
+    ) {
+      for (const key of Object.keys(PrismaCoreModule.connections)) {
+        const connection = PrismaCoreModule.connections[key];
+        if (connection && typeof connection.$disconnect == 'function') {
+          connection.$disconnect();
+        }
       }
     }
+  }
+
+  static forRoot(_options: PrismaModuleOptions) {
+    const {
+      url,
+      options = {},
+      name,
+      retryAttempts = 10,
+      retryDelay = 3000,
+      connectionFactory,
+      connectionErrorFactory,
+    } = _options;
+    let newOptions = {
+      datasourceUrl: url,
+    };
+    if (!Object.keys(options).length) {
+      newOptions = { ...newOptions, ...options };
+    }
+
+    const dbType = getDBType(url as string);
+    let _prismaClient;
+    if (dbType === 'mysql') {
+      _prismaClient = MySQLClient;
+    } 
+    // 这里可以扩展其他数据库
+    // else if (dbType === 'postgresql') {
+    //   _prismaClient = PgClient;
+    // } 
+    else {
+      throw new Error(`Unsupported database type: ${dbType}`);
+    }
+
+    const providerName = name || PRISMA_CONNECTION_NAME;
+    const prismaConnectionErrorFactory =
+      connectionErrorFactory || ((err) => err);
+    const prismaConnectionFactory =
+      connectionFactory ||
+      (async (clientOptions) => await new _prismaClient(clientOptions));
+
+    const prismaClientProvider: Provider = {
+      provide: providerName,
+      useFactory: async () => {
+        // 加入错误重试
+        if (typeof url === 'string' && this.connections[url]) {
+          return this.connections[url];
+        }
+        const client = await prismaConnectionFactory(newOptions, _prismaClient);
+        this.connections[url as string] = client;
+        return lastValueFrom(
+          defer(() => client.$connect()).pipe(
+            handleRetry(retryAttempts, retryDelay),
+            catchError((err) => {
+              throw prismaConnectionErrorFactory(err);
+            }),
+          ),
+        ).then(() => client);
+      },
+    };
+    const connectionsProvider = {
+      provide: PRISMA_CONNECTIONS,
+      useValue: this.connections,
+    };
 
     return {
       module: PrismaCoreModule,
-      providers: [prismaClientProvider],
-      exports: [prismaClientProvider]
-    }
+      providers: [prismaClientProvider, connectionsProvider],
+      exports: [prismaClientProvider, connectionsProvider],
+    };
   }
-  static forRootAsync(){}
 
+  static forRootAsync(_options: PrismaModuleAsyncOptions): DynamicModule {
+    const providerName = _options.name || PRISMA_CONNECTION_NAME;
+
+    const prismaClientProvider: Provider = {
+      provide: providerName,
+      useFactory: (prismaModuleOptions: PrismaModuleOptions) => {
+        if (!prismaModuleOptions) return;
+        const {
+          url,
+          options = {},
+          retryAttempts = 10,
+          retryDelay = 3000,
+          connectionFactory,
+          connectionErrorFactory,
+        } = prismaModuleOptions;
+        let newOptions = {
+          datasourceUrl: url,
+        };
+        if (!Object.keys(options).length) {
+          newOptions = { ...newOptions, ...options };
+        }
+
+        const dbType = getDBType(url as string);
+        let _prismaClient;
+        if (dbType === 'mysql') {
+          _prismaClient = MySQLClient;
+        }else {
+          throw new Error(`Unsupported database type: ${dbType}`);
+        }
+
+        const prismaConnectionErrorFactory =
+          connectionErrorFactory || ((err) => err);
+        const prismaConnectionFactory =
+          connectionFactory ||
+          (async (clientOptions) => await new _prismaClient(clientOptions));
+        return lastValueFrom(
+          defer(async () => {
+            const url = newOptions.datasourceUrl;
+            if (typeof url === 'string' && this.connections[url]) {
+              return this.connections[url];
+            }
+            const client = await prismaConnectionFactory(
+              newOptions,
+              _prismaClient,
+            );
+            this.connections[url as string] = client;
+            return client;
+          }).pipe(
+            handleRetry(retryAttempts, retryDelay),
+            catchError((err) => {
+              throw prismaConnectionErrorFactory(err);
+            }),
+          ),
+        );
+      },
+      inject: [PRISMA_MODULE_OPTIONS],
+    };
+    const asyncProviders = this.createAsyncProviders(_options);
+    const connectionsProvider = {
+      provide: PRISMA_CONNECTIONS,
+      useValue: this.connections,
+    };
+
+    return {
+      module: PrismaCoreModule,
+      providers: [...asyncProviders, prismaClientProvider, connectionsProvider],
+      exports: [prismaClientProvider, connectionsProvider],
+    };
+  }
+
+  private static createAsyncProviders(options: PrismaModuleAsyncOptions) {
+    if (options.useExisting || options.useFactory) {
+      return [this.createAsyncOptionsProvider(options)];
+    }
+    const useClass = options.useClass as Type<PrismaOptionsFactory>;
+
+    return [
+      this.createAsyncOptionsProvider(options),
+      {
+        provide: useClass,
+        useClass,
+      },
+    ];
+  }
+
+  // 创建PRISMA_MODULE_OPTIONS的Provide，来源
+  private static createAsyncOptionsProvider(
+    options: PrismaModuleAsyncOptions,
+  ): Provider {
+    if (options.useFactory) {
+      return {
+        provide: PRISMA_MODULE_OPTIONS,
+        useFactory: options.useFactory,
+        inject: options.inject || [],
+      };
+    }
+
+    const inject = [
+      (options.useClass || options.useExisting) as Type<PrismaOptionsFactory>,
+    ];
+
+    return {
+      provide: PRISMA_MODULE_OPTIONS,
+      inject,
+      useFactory: async (optionsFactory: PrismaOptionsFactory) =>
+        optionsFactory.createPrismaModuleOptions(),
+    };
+  }
 }

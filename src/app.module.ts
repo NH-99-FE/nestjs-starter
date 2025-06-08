@@ -5,6 +5,7 @@ import { LogsModule } from './common/logger/logs.module';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { MailModule } from './common/mail/mail.module';
 import { PrismaModule } from './database/prisma/prisma.module';
+import { PrismaService } from './database/prisma/prisma.service';
 
 @Module({
   imports: [
@@ -17,9 +18,13 @@ import { PrismaModule } from './database/prisma/prisma.module';
       // }
     }),
     MailModule,
-    PrismaModule.forRoot({
-      url:'mysql://root:example@localhost:3306/testdb',
-      name: 'prisma1'
+    // PrismaModule.forRoot({
+    //   url:'mysql://root:example@localhost:3306/testdb',
+    //   name: 'prisma1'
+    // })
+    PrismaModule.forRootAsync({
+      name: 'prisma1',
+      useClass: PrismaService
     })
   ],
   controllers: [AppController],

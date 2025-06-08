@@ -1,5 +1,5 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { PrismaModuleOptions } from './prisma-options.interface';
+import { PrismaModuleAsyncOptions, PrismaModuleOptions } from './prisma-options.interface';
 import { PrismaCoreModule } from './prisma-core.module';
 
 @Module({})
@@ -21,6 +21,11 @@ export class PrismaModule {
       imports: [PrismaCoreModule.forRoot(_options)]
     }
   }
-  static forRootAsync() {}
+    static forRootAsync(options: PrismaModuleAsyncOptions){
   
+      return {
+        module: PrismaModule,
+        imports: [PrismaCoreModule.forRootAsync(options)]
+      }
+    }
 }
