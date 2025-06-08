@@ -7,7 +7,7 @@ import { PrismaClient } from '@prisma/client';
 
 @Controller()
 export class AppController {
-  constructor(@Inject('prisma1') private prismaService: PrismaClient){}
+  constructor(@Inject('PRISMA_DATABASE') private prismaService: PrismaClient){}
 
   @Get()
   async getHello():Promise<any> {

@@ -5,12 +5,12 @@ import { Request } from 'express';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class PrismaService implements PrismaOptionsFactory {
+export class PrismaConfigService implements PrismaOptionsFactory {
   constructor(
     @Inject(REQUEST) private request: Request,
     private configService: ConfigService
-  ){
-  }
+  ){}
+  
   createPrismaModuleOptions(): PrismaModuleOptions | Promise<PrismaModuleOptions> {
     const headers = this.request.headers
     const tenantId = headers['x-tenant-id'] || 'default'
@@ -27,5 +27,4 @@ export class PrismaService implements PrismaOptionsFactory {
     }
 
   }
-  async onModuleInit() { }
 }

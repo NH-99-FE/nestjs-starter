@@ -22,7 +22,6 @@ export class PrismaModule {
     }
   }
     static forRootAsync(options: PrismaModuleAsyncOptions){
-  
       return {
         module: PrismaModule,
         imports: [PrismaCoreModule.forRootAsync(options)]
