@@ -5,8 +5,8 @@ import { UserAdapter } from '../user.interface';
 
 export class UserPrismaRepository implements UserAdapter {
   constructor(@Inject(PRISMA_DATABASE) private prismaClient: PrismaClient) {}
-  find(): Promise<any[]> {
-    return this.prismaClient.user.findMany({});
+  find(username: string): Promise<any[]> {
+    return this.prismaClient.user.findMany({where: {username}});
   }
   create(userObj: any): Promise<any> {
     return this.prismaClient.user.create({ data: userObj });

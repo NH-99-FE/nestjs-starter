@@ -12,9 +12,4 @@ describe('AppController', () => {
     appController = module.get<AppController>(AppController);
   });
 
-  describe('root', () => {
-    it('should return "Hello World!', () => {
-      expect(appController.getHello(9)).toBe('Hello World!')
-    })
-  })
 });

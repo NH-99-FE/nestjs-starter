@@ -6,6 +6,7 @@ import { CacheCommonModule } from './common/cache/cache-common.module';
 import { MailModule } from './common/mail/mail.module';
 import { DatabaseModule } from './database/database.module';
 import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 
 
 @Module({
@@ -15,7 +16,8 @@ import { UserModule } from './user/user.module';
     CacheCommonModule,
     MailModule,
     DatabaseModule,
-    UserModule
+    UserModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: []

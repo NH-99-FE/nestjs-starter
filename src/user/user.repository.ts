@@ -10,9 +10,9 @@ export class UserRepository implements UserAdapter {
     @Inject(REQUEST) private request: Request,
     @Optional() private userPrismaRepository: UserPrismaRepository,
   ) {}
-  find(): Promise<any[]> {
+  find(username:string): Promise<any[]> {
     const client = this.getRepository();
-    return client.find();
+    return client.find(username);
   }
   create(userObj: any): Promise<any> {
     const client = this.getRepository();
