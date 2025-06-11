@@ -14,13 +14,14 @@ import { redisStore } from 'cache-manager-ioredis-yet';
 
         if (cacheType === 'redis') {
           return {
-            store: redisStore,
-            host: configService.get<string>('REDIS_HOST', 'localhost'),
-            port: configService.get<number>('REDIS_PORT', 6379),
-            password: configService.get<string>('REDIS_PASSWORD', 'example'),
-
-            ttl: configService.get<number>('CACHE_TTL', 30 * 1000), // milliseconds
-            max: configService.get<number>('CACHE_MAX_ITEMS', 100), // maximum number of items in cache
+            store: await redisStore({
+              host: configService.get<string>('REDIS_HOST', 'localhost'),
+              port: configService.get<number>('REDIS_PORT', 6379),
+              // password: configService.get<string>('REDIS_PASSWORD', 'example'),
+              db: configService.get<number>('REDIS_DB', 0),
+              // 这里 ttl 单位是秒
+              ttl: configService.get<number>('CACHE_TTL', 30),
+            }),
           };
         } else {
           return {
